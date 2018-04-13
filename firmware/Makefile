@@ -1,4 +1,4 @@
-MCU:= atmega328p
+MCU:= atmega328
 PROGRAMMER:= usbtiny
 PROGRAMMER_PORT:= usb
 
