@@ -4,7 +4,7 @@
 #Nick Ames 2018
 import wiringpi
 import struct
-import re
+import math
 
 def interpret_size_code(size_code):
 	"""Return the (byte length, fixedpoint, structcode) as a tuple
@@ -34,6 +34,8 @@ def read_reg_raw(reg_num, size_code):
 		if data[3] & 0x80:
 			neg = True
 			data = struct.pack("<L", (~struct.unpack("<L", bytes(data))[0] + 1) & 0xFFFFFFFF)
+		else:
+			neg = False
 		frac = 0
 		for b in range(0, 15):
 			i = int(b > 7)
@@ -53,7 +55,17 @@ def write_reg_raw(reg_num, size_code, value):
 	if not fixedpoint:
 		data = struct.pack(structcode, value)
 	else:
-		pass
+		if value < 0:
+			neg = True
+			value = -value
+		else:
+			neg = False
+		data = list(struct.pack("<H", math.floor(abs(value) * 2**15) & 0xFFFF)) + list(struct.pack("<H", math.floor(value)))
+		data[1] = (data[2] & 0x01) << 7 | (data[1] & 0x7F)
+		data[2] = ((data[2] >> 1) & 0x7F) |(data[3] & 0x01) << 7 
+		data[3] = (data[3] >> 1) & 0x7F
+		if neg:
+			data = struct.pack("<L", (~struct.unpack("<L", bytes(data))[0] + 1) & 0xFFFFFFFF)
 	buf = bytes([reg_num, 0] + list(data))
 	wiringpi.wiringPiSPIDataRW(0, buf[0:size+2])
 	
@@ -64,8 +76,8 @@ def init():
 
 def main():
 	init()
-	write_reg_raw(43, "int32_t", 1234567)
-	print(read_reg_raw(43, "int32_t"))
+	write_reg_raw(42, "accum", -12345.12345678)
+	print(read_reg_raw(42, "accum"))
 
 if __name__ == "__main__":
 	main()
