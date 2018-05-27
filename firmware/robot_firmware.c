@@ -23,6 +23,7 @@ void init(void){
 	spi_init();
 	set(DDRB, PB2);
 	speaker_on();
+	sei();
 	log("Junior Design Robot Firmware Built ");
 	log(__DATE__);
 	log(" ");

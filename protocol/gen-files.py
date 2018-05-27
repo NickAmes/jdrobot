@@ -113,6 +113,8 @@ def gen_csource(protocol):
 	s += "volatile struct comm_data_t *Data = &DataReal;\n"
 	s += "\n"
 	
+	s += """ISR(SPI_STC){
+	
 	return s
 
 def gen_firmware(protocol, cpath, hpath):

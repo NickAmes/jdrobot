@@ -5,7 +5,7 @@
 #include "config.h"
 #include <avr/interrupt.h>
 #include <util/setbaud.h>
-#include <avr/pgmspace.h>
+#include "uart.h"
 
 #define set(port, bit) (port |= _BV(bit))
 #define clr(port, bit) (port &= ~_BV(bit))

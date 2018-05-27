@@ -2,6 +2,7 @@
  * Robot Firmware - UART Functions
  * Nick Ames 2018
  */
+#include <avr/pgmspace.h>
 
 /* Setup UART at BAUD 8N1. */
 void uart_init(void);

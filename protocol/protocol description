@@ -6,6 +6,6 @@ Supported data types are stdint integers and stdfix 16.15 fixed-point real numbe
 One register is read or written in each bus transaction. The format is:
 
 byte:    1           2            3        n
-data: <reg id> <reg data (lsb)>  ... <reg data (msb)>
+data: <reg id> <dummy byte>  <reg data (lsb)>  ... <reg data (msb)>
 
 Read/write state is determined by the most significant bit of the register. 0 = Write, 1 = read.
