@@ -45,12 +45,13 @@ def read_reg_raw(reg_num, size_code):
 		if neg: v = -v
 	return v
 	
-def write_reg_raw(reg_num, size_code, fixedpoint, value):
+def write_reg_raw(reg_num, size_code, value):
 	"""Write a register, given the size in bytes.
 	   If the register represents a fixed-point number,
 	   fixedpoint must be true."""
+	size, fixedpoint, structcode = interpret_size_code(size_code)
 	if not fixedpoint:
-		data = struct.pack("<l", value)
+		data = struct.pack(structcode, value)
 	else:
 		pass
 	buf = bytes([reg_num, 0] + list(data))
@@ -63,6 +64,7 @@ def init():
 
 def main():
 	init()
+	write_reg_raw(43, "int32_t", 1234567)
 	print(read_reg_raw(43, "int32_t"))
 
 if __name__ == "__main__":

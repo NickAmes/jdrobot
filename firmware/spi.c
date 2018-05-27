@@ -35,6 +35,8 @@ void spi_tx(uint8_t *addr, uint8_t len){
 
 /* Receive a memory block over spi. */
 void spi_rx(uint8_t *addr, uint16_t len){
+	wait_spif();
+	uint8_t dummy = SPDR0;
 	for(uint8_t i=0; i<len; i++){
 		wait_spif();
 		addr[i] = SPDR0;
