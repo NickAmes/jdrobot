@@ -1,0 +1,11 @@
+RPi->Micrcontroller Communication Protocol
+==========================================
+The RPi and microcontroller communicate over a SPI bus, using RPI pins MISO, MOSI, SCK, and CE0; CPOL=0; CPHA=0; and with the RPI as the bus master. Communication is organized around a set of slots in the microcontroller's memory called registers. Each register hold a certain data type.
+Supported data types are stdint integers and stdfix 16.15 fixed-point real numbers (type name "accum").
+
+One register is read or written in each bus transaction. The format is:
+
+byte:    1           2            3        n
+data: <reg id> <reg data (lsb)>  ... <reg data (msb)>
+
+Read/write state is determined by the most significant bit of the register. 0 = Write, 1 = read.

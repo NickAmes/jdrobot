@@ -2,3 +2,4 @@
 *.elf
 protocol.c
 protocol.h
+protocol.py

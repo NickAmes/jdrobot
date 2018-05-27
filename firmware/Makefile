@@ -29,7 +29,7 @@ fuses:
 
 # Compile & link
 $(FILE).bin: $(FILE).c
-	@$(CC) -mmcu=$(MCU) $(CFLAGS) -I. uart.c $(FILE).c -o $(FILE).elf $(LIBS)
+	@$(CC) -mmcu=$(MCU) $(CFLAGS) -I. uart.c spi.c $(FILE).c -o $(FILE).elf $(LIBS)
 	@$(OBJCOPY) -O binary -R .eeprom $(FILE).elf $(FILE).bin
 
 # Download firmware, without changing fuses or eeprom.

@@ -4,7 +4,7 @@
  */
 
 /* Setup UART at BAUD 8N1. */
-void init_uart(void);
+void uart_init(void);
 
 /* Send a character out of the UART. */
 void uart_putchar(char c);

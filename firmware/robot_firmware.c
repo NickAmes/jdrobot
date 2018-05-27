@@ -9,15 +9,20 @@
 #include <avr/pgmspace.h>
 #include <util/setbaud.h>
 #include "uart.h"
+#include "spi.h"
 
 #define set(port, bit) (port |= _BV(bit))
 #define clr(port, bit) (port &= ~_BV(bit))
 
+#define speaker_on()  set(PORTB, PB2)
+#define speaker_off() clr(PORTB, PB2)
+
 /* Initialize system. */
 void init(void){
-	set(DDRD, PD1); /* UART output */
-	init_uart();
-	
+	uart_init();
+	spi_init();
+	set(DDRB, PB2);
+	speaker_on();
 	log("Junior Design Robot Firmware Built ");
 	log(__DATE__);
 	log(" ");
