@@ -119,12 +119,14 @@ def gen_csource(protocol):
 """
 	
 	for r in protocol:
-		s += "\t\tcase        % 2d: /* Write %s (%s) */\n"%(r.number, r.name, r.desc)
-		s += "\t\t\tspi_rx((uint8_t *) &DataReal.%s, sizeof(DataReal.%s));\n"%(r.name, r.name)
-		s += "\t\t\tbreak;\n"
-		s += "\t\tcase 0x80 + % 2d: /* Read %s (%s) */\n"%(r.number, r.name, r.desc)
-		s += "\t\t\tspi_tx((uint8_t *) &DataReal.%s, sizeof(DataReal.%s));\n"%(r.name, r.name)
-		s += "\t\t\tbreak;\n"
+		if r.write:
+			s += "\t\tcase        % 2d: /* Write %s (%s) */\n"%(r.number, r.name, r.desc)
+			s += "\t\t\tspi_rx((uint8_t *) &DataReal.%s, sizeof(DataReal.%s));\n"%(r.name, r.name)
+			s += "\t\t\tbreak;\n"
+		if r.read:
+			s += "\t\tcase 0x80 + % 2d: /* Read %s (%s) */\n"%(r.number, r.name, r.desc)
+			s += "\t\t\tspi_tx((uint8_t *) &DataReal.%s, sizeof(DataReal.%s));\n"%(r.name, r.name)
+			s += "\t\t\tbreak;\n"
 	s += """	}
 
 	/* Clear SPIF flag */
