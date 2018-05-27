@@ -21,14 +21,11 @@ void spi_init(void){
 static inline void wait_spif(void){
 	while(!(SPSR0 & _BV(SPIF)) && !CS_STATE()){
 		/* Wait until transmission or transaction ends. */
-		set(PORTD, PB3);
 	}
-	clr(PORTD, PB3);
 }
 
 /* Send a memory block over spi. */
 void spi_tx(uint8_t *addr, uint8_t len){
-	uint8_t dummy;
 	for(int8_t i=0; i<len; i++){
 		wait_spif();
 		SPDR0 = addr[i];
@@ -42,21 +39,4 @@ void spi_rx(uint8_t *addr, uint16_t len){
 		wait_spif();
 		addr[i] = SPDR0;
 	}
-}
-
-ISR(SPI0_STC_vect){
-	set(PORTD, PB2); //TODO
-	
-	uint8_t reg_num = SPDR0;
-	uint8_t buf[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-	spi_rx(buf, 8);
-	
-	for(uint8_t i=0; i<8; i++){
-		uart_putchar('0' + (buf[i] >> 4));
-	}
-	
-	/* Clear SPIF flag */
-	reg_num = SPSR0;
-	reg_num = SPDR0;
-	clr(PORTD, PB2); //TODO
 }

@@ -76,9 +76,9 @@ def gen_cheader(protocol):
 #include <stdfix.h>
 #include <stdint.h>
 """
-	s += "struct  comm_data_t {\n"
+	s += "struct comm_data_t {\n"
 	for r in protocol:
-		s += "\t" + r.size + " " + r.name + ", /* " + r.desc + " */\n"
+		s += "\t" + r.size + " " + r.name + "; /* " + r.desc + " */\n"
 	s += "};\n\n"
 	
 	s+= """/* To avoid the volatile qualifier being a pain in the ass, the main loop
@@ -94,7 +94,7 @@ def gen_csource(protocol):
 		if reg.size == "accum":
 			return str(float(reg.default)) + "k"
 		else:
-			return str(int(reg.default))
+			return str(int(reg.default)) + "L"
 
 	s = """/* Junior Design Sp2018 Final Project
  * Robot Firmware - RPi <-> Microcontroller Communication
@@ -106,28 +106,47 @@ def gen_csource(protocol):
 #include "protocol.h"
 #include "spi.h"
 """
-	s += "struct comm_data_t DataReal = {"
+	s += "struct comm_data_t DataReal = {\n"
 	for r in protocol:
 		s += "\t." + r.name + " = " + format_default(r) + ", /* " + r.desc + " */\n"
 	s += "};\n\n"
 	s += "volatile struct comm_data_t *Data = &DataReal;\n"
 	s += "\n"
 	
-	s += """ISR(SPI_STC){
+	s += """ISR(SPI0_STC_vect){
+	uint8_t reg_num = SPDR0;
+	switch(reg_num){
+"""
+	
+	for r in protocol:
+		s += "\t\tcase        % 2d: /* Write %s (%s) */\n"%(r.number, r.name, r.desc)
+		s += "\t\t\tspi_rx((uint8_t *) &DataReal.%s, sizeof(DataReal.%s));\n"%(r.name, r.name)
+		s += "\t\t\tbreak;\n"
+		s += "\t\tcase 0x80 + % 2d: /* Read %s (%s) */\n"%(r.number, r.name, r.desc)
+		s += "\t\t\tspi_tx((uint8_t *) &DataReal.%s, sizeof(DataReal.%s));\n"%(r.name, r.name)
+		s += "\t\t\tbreak;\n"
+	s += """	}
+
+	/* Clear SPIF flag */
+	reg_num = SPSR0;
+	reg_num = SPDR0;
+}
+"""
 	
 	return s
 
 def gen_firmware(protocol, cpath, hpath):
-	pass
+	with open(hpath, "w") as hfile:
+		hfile.write(gen_cheader(protocol))
+	with open(cpath, "w") as cfile:
+		cfile.write(gen_csource(protocol))
 
 def gen_python(protocol, pypath):
 	pass
 
 def main():
 	p = parse_sheet(SpreadsheetPath)
-	print(gen_cheader(p))
-	print("")
-	print(gen_csource(p))
+	gen_firmware(p, FirmwareCPath, FirmwareHPath)
 
 if __name__ == "__main__":
 	main()
