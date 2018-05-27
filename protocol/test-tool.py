@@ -24,11 +24,10 @@ def minmax_values(size_code):
 			"int32_t"  : (-2**31,2**31 - 1),
 			"uint32_t" : (0,2**32)}[size_code]
 
-def setup_controls(window, protocol):
-	"""Setup the window controls."""
-	window.setWindowTitle("Test Tool")
-	ww = QWidget(window)
-	flayout = QFormLayout(ww)
+def setup_register_area(parent, window, protocol):
+	"""Setup a form layout with all the register controls.
+	   Returns a tuples (flayout, read_funcs, write_funcs)."""
+	flayout = QFormLayout(parent)
 	read_funcs = []
 	write_funcs = []
 	for r in protocol:
@@ -54,9 +53,12 @@ def setup_controls(window, protocol):
 			return inner
 		readbtn = QToolButton()
 		readbtn.setText("Read")
-		rf = readfunc(r, sp)
-		readbtn.pressed.connect(rf)
-		read_funcs.append(rf)
+		if r.read:
+			rf = readfunc(r, sp)
+			readbtn.pressed.connect(rf)
+			read_funcs.append(rf)
+		else:
+			readbtn.setEnabled(False)
 		hl.addWidget(readbtn)
 		
 		def writefunc(r, sp):
@@ -67,13 +69,45 @@ def setup_controls(window, protocol):
 			return inner
 		writebtn = QToolButton()
 		writebtn.setText("Write")
-		rf = writefunc(r, sp)
-		writebtn.pressed.connect(rf)
-		write_funcs.append(rf)
+		if r.write:
+			rf = writefunc(r, sp)
+			writebtn.pressed.connect(rf)
+			write_funcs.append(rf)
+		else:
+			writebtn.setEnabled(False)
 		hl.addWidget(writebtn)
 		
 		flayout.addRow(label, hl)
-	ww.setLayout(flayout)
+	return (flayout, read_funcs, write_funcs)
+
+def setup_controls(window, protocol):
+	"""Setup the window controls."""
+	window.setWindowTitle("Test Tool")
+	ww = QWidget(window)
+	vl = QVBoxLayout(ww)
+	
+	flayout, read_funcs, write_funcs = setup_register_area(ww, window, protocol)
+	
+	hl = QHBoxLayout(ww)
+	hl.addStretch()
+	def readall_func():
+		for r in read_funcs:
+			r()
+	rabtn = QToolButton()
+	rabtn.setText("Read All")
+	rabtn.pressed.connect(readall_func)
+	hl.addWidget(rabtn)
+	def writeall_func():
+		for w in write_funcs:
+			w()
+	wrbtn = QToolButton()
+	wrbtn.setText("Write All")
+	wrbtn.pressed.connect(writeall_func)
+	hl.addWidget(wrbtn)
+	
+	vl.addLayout(hl)
+	vl.addLayout(flayout)
+	ww.setLayout(vl)
 	window.setCentralWidget(ww)
 	
 def main():
