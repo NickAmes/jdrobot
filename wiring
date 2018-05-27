@@ -1,0 +1,9 @@
+Wiring
+======
+RPi pin           uC Pin
+------------------------
+24 GPIO08 CEO  | SS    16
+21 GPIO09 MISO | MISO  18
+19 GPIO10 MOSI | MOSI  17
+23 GPIO11 SCK  | SCK   16
+22 GPIO25      | RESET 1
