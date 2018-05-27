@@ -1,62 +1,59 @@
+/* Junior Design Sp2018 Final Project
+ * Robot Firmware
+ * Nick Ames 2018
+ */
 #include <avr/interrupt.h>
-#define F_CPU 10000000UL
+#define F_CPU 8000000UL //TODO: Change when oscillator fixed. 
 #include <util/delay.h>
+#define BAUD 9600
+#include <util/atomic.h>
+#include <avr/pgmspace.h>
+#include <util/setbaud.h>
 
 #define set(port, bit) (port |= _BV(bit))
 #define clr(port, bit) (port &= ~_BV(bit))
 
-void motor_power(int8_t left, int8_t right){
-	OCR0A = 130;
-	OCR0B = 160;
-	if(left > 0){
-		OCR0B = left << 1;
-		set(PORTC, 5);
-		clr(PORTC, 4);
-	} else if(left == 0){
-		OCR0B = 255;
-		set(PORTC, 5);
-		set(PORTC, 4);
-	} else if(left < 0 && left > -128){
-		OCR0B = (-left) << 1;
-		clr(PORTC, 5);
-		set(PORTC, 4);
-	} else {
-		OCR0B = 255;
-		clr(PORTC, 5);
-		set(PORTC, 4);
-	}
-	if(right > 0){
-		OCR0A = right << 1;
-		set(PORTC, 3);
-		clr(PORTC, 2);
-	} else if(right == 0){
-		OCR0A = 255;
-		set(PORTC, 3);
-		set(PORTC, 2);
-	} else if(right < 0 && right > -128){
-		OCR0A = (-right) << 1;
-		clr(PORTC, 3);
-		set(PORTC, 2);
-	} else {
-		OCR0A = 255;
-		clr(PORTC, 3);
-		set(PORTC, 2);
-	}
+/* Setup UART at BAUD 8N1. */
+void init_uart(void){
+	UBRR0H = UBRRH_VALUE;
+	UBRR0L = UBRRL_VALUE;
+	#if USE_2X
+	UCSR0A |= (1 << U2X);
+	#else
+	UCSR0A &= ~(1 << U2X);
+	#endif
+	UCSR0C = _BV(UCSZ1) | _BV(UCSZ0); /* 8-bit data */
+    UCSR0B = _BV(RXEN) | _BV(TXEN); 
 }
 
+/* Send a character out of the UART. */
+void uart_putchar(char c) {
+    loop_until_bit_is_set(UCSR0A, UDRE);
+    UDR0 = c;
+}
+
+/* Get a character from the uart. */
+char uart_getchar(void) {
+    loop_until_bit_is_set(UCSR0A, RXC);
+    return UDR0;
+}
+
+/* Send a PROGMEM string out of the UART. */
+
+/* Send a PROGMEM string literal from the uart. */
+#define log(str) fsfsadffasf
+
+/* Initialize system. */
 void init(void){
-	DDRC |= _BV(5) | _BV(4) | _BV(3) | _BV(2);
-	DDRD |= _BV(5) | _BV(6);
-	TCCR0A = _BV(COM0A1) | _BV(COM0B1) | _BV(WGM01) | _BV(WGM00);
-	TCCR0B = _BV(CS01) | _BV(CS00); /* Set CLKDIV = 64 */
+	set(DDRD, PD1); /* UART output */
+	init_uart();
 }
-
 
 int main(void){
 	init();
-	motor_power(0, 0);
+	uart_putchar('h');
 	while(1){
-		/* Infinite loop. */
+		uart_putchar(uart_getchar());
 	}
 	return(0);
 }
