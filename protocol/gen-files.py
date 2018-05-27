@@ -13,7 +13,8 @@ SoftwareDir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__fil
 SpreadsheetPath = SoftwareDir + "protocol/Protocol.xls"
 FirmwareCPath = SoftwareDir + "firmware/protocol.c"
 FirmwareHPath = SoftwareDir + "firmware/protocol.h"
-PythonPath = SoftwareDir + "firmware/python-library/protocol.py"
+PythonPath = SoftwareDir + "python-library/robolib.py"
+PythonTemplatePath = SoftwareDir + "protocol/gen-file-robolibtemplate.py"
 
 Reg = namedtuple("Reg",
                  ["number", "name", "size", "read", "write",
@@ -133,22 +134,37 @@ def gen_csource(protocol):
 	reg_num = SPSR0;
 	reg_num = SPDR0;
 }
-"""
-	
+"""	
 	return s
 
-def gen_firmware(protocol, cpath, hpath):
+def gen_python(protocol):
+	"""Return a python source file fragment for the given protocol as a string."""
+	s = ""
+	for r in protocol:
+		if r.write:
+			s += "set_%s(value): #%s\n"%(r.name, r.desc)
+			s += "\twrite_reg_raw(%d, \"%s\", value)\n\n"%(r.number, r.size)
+		if r.read:
+			s += "get_%s(): #%s\n"%(r.name, r.desc)
+			s += "\treturn read_reg_raw(%d, \"%s\")\n\n"%(r.number, r.size)
+	return s
+
+def write_firmware(protocol, cpath, hpath):
 	with open(hpath, "w") as hfile:
 		hfile.write(gen_cheader(protocol))
 	with open(cpath, "w") as cfile:
 		cfile.write(gen_csource(protocol))
 
-def gen_python(protocol, pypath):
-	pass
+def write_python(protocol, pypath, temppath):
+	with open(pypath, "w") as pyfile:
+		with open(temppath, "r") as tempfile:
+			pyfile.write(tempfile.read())
+			pyfile.write(gen_python(protocol))
 
 def main():
 	p = parse_sheet(SpreadsheetPath)
-	gen_firmware(p, FirmwareCPath, FirmwareHPath)
+	write_firmware(p, FirmwareCPath, FirmwareHPath)
+	write_python(p, PythonPath, PythonTemplatePath)
 
 if __name__ == "__main__":
 	main()
