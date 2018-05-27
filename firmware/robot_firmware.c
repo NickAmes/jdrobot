@@ -10,6 +10,7 @@
 #include <util/setbaud.h>
 #include "uart.h"
 #include "spi.h"
+#include "motor.h"
 
 #define set(port, bit) (port |= _BV(bit))
 #define clr(port, bit) (port &= ~_BV(bit))
@@ -21,6 +22,7 @@
 void init(void){
 	uart_init();
 	spi_init();
+	motor_init();
 	set(DDRB, PB2);
 	speaker_on();
 	set(DDRD, PB2);

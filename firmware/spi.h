@@ -2,6 +2,7 @@
  * Robot Firmware - SPI Support
  * Nick Ames 2018
  */
+#include <stdint.h>
 
 /* Initialize the SPI bus as a slave. */
 void spi_init(void);

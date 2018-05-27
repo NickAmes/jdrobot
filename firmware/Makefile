@@ -29,8 +29,8 @@ fuses:
 
 # Compile & link
 $(FILE).bin: $(FILE).c
-	@python3 ../protocol/gen-files.py
-	@$(CC) -mmcu=$(MCU) $(CFLAGS) -I. uart.c spi.c protocol.c $(FILE).c -o $(FILE).elf $(LIBS)
+	@python3 ../protocol/gen_files.py
+	@$(CC) -mmcu=$(MCU) $(CFLAGS) -I. uart.c spi.c motor.c protocol.c $(FILE).c -o $(FILE).elf $(LIBS)
 	@$(OBJCOPY) -O binary -R .eeprom $(FILE).elf $(FILE).bin
 
 # Download firmware, without changing fuses or eeprom.

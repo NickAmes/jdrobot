@@ -76,18 +76,6 @@ def init():
 	"""Setup the SPI interface for communication with the microcontroller."""
 	wiringpi.wiringPiSetupGpio()  # For GPIO pin numbering
 	wiringpi.wiringPiSPISetup(0, 500000)
-def set_test1(value): #
-	write_reg_raw(42, "accum", value)
-
-def get_test1(): #
-	return read_reg_raw(42, "accum")
-
-def set_test2(value): #
-	write_reg_raw(43, "int32_t", value)
-
-def get_test2(): #
-	return read_reg_raw(43, "int32_t")
-
 def set_left_motor(value): #Left Motor Speed in RPM
 	write_reg_raw(1, "accum", value)
 
