@@ -16,7 +16,6 @@ void spi_init(void){
 	set(PORTB, PB4); /* CS pull-up */
 	set(DDRB, PB6); /* MISO output. */
 	SPCR0 = _BV(SPIE) | _BV(SPE);
-	SPDR0 = 0xAA;
 }
 
 static inline void wait_spif(void){
@@ -50,7 +49,11 @@ ISR(SPI0_STC_vect){
 	
 	uint8_t reg_num = SPDR0;
 	uint8_t buf[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-	spi_tx(buf, 8);
+	spi_rx(buf, 8);
+	
+	for(uint8_t i=0; i<8; i++){
+		uart_putchar('0' + (buf[i] >> 4));
+	}
 	
 	/* Clear SPIF flag */
 	reg_num = SPSR0;
