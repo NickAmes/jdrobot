@@ -11,6 +11,7 @@
 #include "uart.h"
 #include "spi.h"
 #include "motor.h"
+#include "protocol.h"
 
 #define set(port, bit) (port |= _BV(bit))
 #define clr(port, bit) (port &= ~_BV(bit))
@@ -39,8 +40,9 @@ void init(void){
 int main(void){
 	init();
 	while(1){
-		log("Hello world!\n");
-		_delay_ms(1000);
+ 		motor_lpower(Data->left_power);
+		motor_rpower(Data->right_power);
+		_delay_ms(2);
 	}
 	return(0);
 }

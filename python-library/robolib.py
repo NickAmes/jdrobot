@@ -88,8 +88,14 @@ def set_right_motor(value): #Right Motor Speed in RPM
 def get_right_motor(): #Right Motor Speed in RPM
 	return read_reg_raw(2, "accum")
 
+def set_left_power(value): #Left Motor Power
+	write_reg_raw(3, "uint8_t", value)
+
 def get_left_power(): #Left Motor Power
 	return read_reg_raw(3, "uint8_t")
+
+def set_right_power(value): #Right Motor Power
+	write_reg_raw(4, "uint8_t", value)
 
 def get_right_power(): #Right Motor Power
 	return read_reg_raw(4, "uint8_t")
