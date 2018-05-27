@@ -75,51 +75,52 @@ def write_reg_raw(reg_num, size_code, value):
 def init():
 	"""Setup the SPI interface for communication with the microcontroller."""
 	wiringpi.wiringPiSetupGpio()  # For GPIO pin numbering
-	wiringpi.wiringPiSPISetup(0, 500000)set_test1(value): #
+	wiringpi.wiringPiSPISetup(0, 500000)
+def set_test1(value): #
 	write_reg_raw(42, "accum", value)
 
-get_test1(): #
+def get_test1(): #
 	return read_reg_raw(42, "accum")
 
-set_test2(value): #
+def set_test2(value): #
 	write_reg_raw(43, "int32_t", value)
 
-get_test2(): #
+def get_test2(): #
 	return read_reg_raw(43, "int32_t")
 
-set_left_motor(value): #Left Motor Speed in RPM
+def set_left_motor(value): #Left Motor Speed in RPM
 	write_reg_raw(1, "accum", value)
 
-get_left_motor(): #Left Motor Speed in RPM
+def get_left_motor(): #Left Motor Speed in RPM
 	return read_reg_raw(1, "accum")
 
-set_right_motor(value): #Right Motor Speed in RPM
+def set_right_motor(value): #Right Motor Speed in RPM
 	write_reg_raw(2, "accum", value)
 
-get_right_motor(): #Right Motor Speed in RPM
+def get_right_motor(): #Right Motor Speed in RPM
 	return read_reg_raw(2, "accum")
 
-get_left_power(): #Left Motor Power
+def get_left_power(): #Left Motor Power
 	return read_reg_raw(3, "uint8_t")
 
-get_right_power(): #Right Motor Power
+def get_right_power(): #Right Motor Power
 	return read_reg_raw(4, "uint8_t")
 
-set_motor_p(value): #Motor Speed Control P Constant
+def set_motor_p(value): #Motor Speed Control P Constant
 	write_reg_raw(5, "accum", value)
 
-get_motor_p(): #Motor Speed Control P Constant
+def get_motor_p(): #Motor Speed Control P Constant
 	return read_reg_raw(5, "accum")
 
-set_motor_i(value): #Motor Speed Control I Constant
+def set_motor_i(value): #Motor Speed Control I Constant
 	write_reg_raw(6, "accum", value)
 
-get_motor_i(): #Motor Speed Control I Constant
+def get_motor_i(): #Motor Speed Control I Constant
 	return read_reg_raw(6, "accum")
 
-set_motor_d(value): #Motor Speed Control D Constant
+def set_motor_d(value): #Motor Speed Control D Constant
 	write_reg_raw(7, "accum", value)
 
-get_motor_d(): #Motor Speed Control D Constant
+def get_motor_d(): #Motor Speed Control D Constant
 	return read_reg_raw(7, "accum")
 

@@ -142,10 +142,10 @@ def gen_python(protocol):
 	s = ""
 	for r in protocol:
 		if r.write:
-			s += "set_%s(value): #%s\n"%(r.name, r.desc)
+			s += "def set_%s(value): #%s\n"%(r.name, r.desc)
 			s += "\twrite_reg_raw(%d, \"%s\", value)\n\n"%(r.number, r.size)
 		if r.read:
-			s += "get_%s(): #%s\n"%(r.name, r.desc)
+			s += "def get_%s(): #%s\n"%(r.name, r.desc)
 			s += "\treturn read_reg_raw(%d, \"%s\")\n\n"%(r.number, r.size)
 	return s
 
