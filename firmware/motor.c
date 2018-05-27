@@ -14,14 +14,25 @@
 void motor_init(void){
 	DDRD |= _BV(PD4) | _BV(PD5) | _BV(PD6) | _BV(PD7);
 	DDRE |= _BV(PE2) | _BV(PE3);
-	set(PORTC, PC0);
+	DDRC &= ~(_BV(PC1) | _BV(PC2) | _BV(PC3) | _BV(PC4));
+	PORTC &= ~(_BV(PC1) | _BV(PC2) | _BV(PC3) | _BV(PC4));
+	
+	set(DDRC, PC0);
  	set(PORTD, PD7); /* Sleep off. */
 	clr(PORTC, PC0); /* Mode = fast decay */
 	clr(PORTE, PE3); /* Mode = fast decay */
 	
+	PCMSK2 |= _BV(PCINT17) | _BV(PCINT18) | _BV(PCINT19) | _BV(PCINT20);
+	PCICR |= _BV(PCIE2);
+	
 	/* Setup motor PWM timer. */
 	TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM10);
 	TCCR1B = _BV(CS11) | _BV(CS10);
+	
+	/* Setup 100Hz Speed Regulation Timer */
+	TIMSK3 = _BV(OCIE3A);
+	OCR3A = F_CPU / (100 * 64);
+	TCCR3B = _BV(WGM32) | _BV(CS31) | _BV(CS30);
 }
 
 /* Set left motor.
@@ -44,4 +55,16 @@ void motor_rpower(int16_t power){
 	} else {
 		clr(PORTD, PD6);
 	}
+}
+
+/* Encoder Interrupt */
+ISR(PCINT2_vect){
+	set(PORTD, PD2);
+	clr(PORTD, PD2);
+}
+
+/* Speed Control Interrupt */
+ISR(TIMER3_COMPA_vect){
+	set(PORTD, PD3);
+	clr(PORTD, PD3);
 }

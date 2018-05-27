@@ -10,9 +10,9 @@ LIBS:=
 
 
 #Fuse Settings
-LFUSE:=0x
-HFUSE:=0x
-EFUSE:=0x
+LFUSE:=0xE2
+HFUSE:=0xD9
+EFUSE:=0xF7
 
 # Source filename, without extension
 FILE:=robot_firmware

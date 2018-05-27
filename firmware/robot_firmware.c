@@ -26,8 +26,8 @@ void init(void){
 	motor_init();
 	set(DDRB, PB2);
 	speaker_on();
-	set(DDRD, PB2);
-	set(DDRD, PB3);
+	set(DDRD, PD2);
+	set(DDRD, PD3);
 	sei();
 	log("Junior Design Robot Firmware Built ");
 	log(__DATE__);
