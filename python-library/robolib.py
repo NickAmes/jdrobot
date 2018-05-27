@@ -4,32 +4,36 @@
 #Nick Ames 2018
 import wiringpi
 import struct
+import re
 
 def interpret_size_code(size_code):
-	"""Return the (byte length, fixedpoint, signed) as a tuple
+	"""Return the (byte length, fixedpoint, structcode) as a tuple
 	   for a size code."""
-	if size_code == "accum":
-		return (4, True, True)
-	else:
-		pass
+	return {"accum"    : (4, True, None),
+			"int8_t"   : (1, False, "<b"),
+			"uint8_t"  : (1, False, "<B"),
+			"int16_t"  : (2, False, "<h"),
+			"uint16_t" : (2, False, "<H"),
+			"int32_t"  : (4, False, "<l"),
+			"uint32_t" : (4, False, "<L")}[size_code]
+		 
 
 def read_reg_raw(reg_num, size_code):
 	"""Given a register number and size in bytes, read it
 	   and return the value (as an int or float).
 	   If the register represents a fixed-point number,
 	   fixedpoint must be true."""
-	size, fixedpoint, signed = interpret_size_code(size_code)
+	size, fixedpoint, structcode = interpret_size_code(size_code)
 	buf = bytes([reg_num + 0x80, 0] + [0] * size)
 	_ , retdata = wiringpi.wiringPiSPIDataRW(0, buf)
-	data = list(retdata[2:]) + [0]
+	data = list(retdata[2:])
 	v = 0
 	if not fixedpoint:
-		for b,i in zip(data, range(0, len(data))):
-			v += b << (i * 8)
+		v = struct.unpack(structcode, bytes(data))[0]
 	else:
 		if data[3] & 0x80:
 			neg = True
-			data = struct.pack("<L", (~struct.unpack("<L", bytes(data[0:4]))[0] + 1) & 0xFFFFFFFF)
+			data = struct.pack("<L", (~struct.unpack("<L", bytes(data))[0] + 1) & 0xFFFFFFFF)
 		frac = 0
 		for b in range(0, 15):
 			i = int(b > 7)
@@ -59,7 +63,7 @@ def init():
 
 def main():
 	init()
-	print(read_reg_raw(42, "accum"))
+	print(read_reg_raw(43, "int32_t"))
 
 if __name__ == "__main__":
 	main()
