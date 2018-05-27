@@ -15,7 +15,7 @@ void motor_init(void){
 	DDRD |= _BV(PD4) | _BV(PD5) | _BV(PD6) | _BV(PD7);
 	DDRE |= _BV(PE2) | _BV(PE3);
 	set(PORTC, PC0);
-	set(PORTD, PD7); /* Sleep off. */
+ 	set(PORTD, PD7); /* Sleep off. */
 	clr(PORTC, PC0); /* Mode = fast decay */
 	clr(PORTE, PE3); /* Mode = fast decay */
 	
