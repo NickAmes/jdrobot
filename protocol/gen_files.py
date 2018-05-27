@@ -14,7 +14,7 @@ SpreadsheetPath = SoftwareDir + "protocol/Protocol.xls"
 FirmwareCPath = SoftwareDir + "firmware/protocol.c"
 FirmwareHPath = SoftwareDir + "firmware/protocol.h"
 PythonPath = SoftwareDir + "python-library/robolib.py"
-PythonTemplatePath = SoftwareDir + "protocol/gen-file-robolibtemplate.py"
+PythonTemplatePath = SoftwareDir + "protocol/gen_file_robolibtemplate.py"
 
 Reg = namedtuple("Reg",
                  ["number", "name", "size", "read", "write",

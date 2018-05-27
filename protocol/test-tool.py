@@ -8,10 +8,11 @@ import signal
 import os
 import sys
 
-SoftwareDir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)) + os.sep
-sys.path.append(os.path.abspath(SoftwareDir) + "../python-library/")
-import gen_files
-import robolib.py
+SoftwareDir=os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+sys.path.append(os.path.abspath(SoftwareDir) + "/python-library/")
+
+print(sys.path)
+import robolib
 
 def main():
 	signal.signal(signal.SIGINT, signal.SIG_DFL) #Make Ctrl-C quit the program

@@ -75,15 +75,7 @@ def write_reg_raw(reg_num, size_code, value):
 def init():
 	"""Setup the SPI interface for communication with the microcontroller."""
 	wiringpi.wiringPiSetupGpio()  # For GPIO pin numbering
-	wiringpi.wiringPiSPISetup(0, 500000)
-
-def main():
-	init()
-	write_reg_raw(42, "accum", -12345.12345678)
-	print(read_reg_raw(42, "accum"))
-
-if __name__ == "__main__":
-	main()set_test1(value): #
+	wiringpi.wiringPiSPISetup(0, 500000)set_test1(value): #
 	write_reg_raw(42, "accum", value)
 
 get_test1(): #
