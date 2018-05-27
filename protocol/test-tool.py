@@ -29,11 +29,14 @@ def setup_controls(window, protocol):
 	window.setWindowTitle("Test Tool")
 	ww = QWidget(window)
 	flayout = QFormLayout(ww)
+	read_funcs = []
+	write_funcs = []
 	for r in protocol:
 		label = QLabel(r.name)
 		hl = QHBoxLayout()
 		if r.size == "accum":
 			sp = QDoubleSpinBox()
+			sp.setDecimals(3)
 		else:
 			sp = QSpinBox()
 		minval, maxval = minmax_values(r.size)
@@ -41,12 +44,38 @@ def setup_controls(window, protocol):
 		sp.setMaximum(maxval)
 		sp.setValue(r.default)
 		hl.addWidget(sp)
-		#hl.addWidget(readbtn)
-		#hl.addWidget(writebtn)
+		
+		def readfunc(r, sp):
+			def inner():
+				v = getattr(robolib, "get_%s"%r.name)()
+				print("Read %s: %f"%(r.name, float(v)))
+				if not sp.hasFocus():
+					sp.setValue(v)
+			return inner
+		readbtn = QToolButton()
+		readbtn.setText("Read")
+		rf = readfunc(r, sp)
+		readbtn.pressed.connect(rf)
+		read_funcs.append(rf)
+		hl.addWidget(readbtn)
+		
+		def writefunc(r, sp):
+			def inner():
+				v = sp.value()
+				getattr(robolib, "set_%s"%r.name)(v)
+				print("Write %s: %f"%(r.name, float(v)))
+			return inner
+		writebtn = QToolButton()
+		writebtn.setText("Write")
+		rf = writefunc(r, sp)
+		writebtn.pressed.connect(rf)
+		write_funcs.append(rf)
+		hl.addWidget(writebtn)
+		
 		flayout.addRow(label, hl)
 	ww.setLayout(flayout)
 	window.setCentralWidget(ww)
-
+	
 def main():
 	robolib.init()
 	signal.signal(signal.SIGINT, signal.SIG_DFL) #Make Ctrl-C quit the program
