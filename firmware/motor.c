@@ -112,7 +112,8 @@ ISR(TIMER3_COMPA_vect){
 	DoSpeed = true;
 }
 
-#define CLAMP_BYTE(var) do {var = (var > 255) ? 255 : ((var < -255) ? -255 : var); } while(0);
+#define POWER_LIMIT 120
+#define CLAMP_BYTE(var) do {var = (var > POWER_LIMIT) ? POWER_LIMIT : ((var < -POWER_LIMIT) ? -POWER_LIMIT : var); } while(0);
 
 static inline void __attribute__((always_inline)) pi(accum kp,
                                                      accum ki,
