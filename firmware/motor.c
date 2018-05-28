@@ -6,6 +6,7 @@
 #include "motor.h"
 #include <avr/interrupt.h>
 #include <stdlib.h>
+#include <util/atomic.h>
 #include "protocol.h"
 
 #define set(port, bit) (port |= _BV(bit))
@@ -103,19 +104,62 @@ ISR(PCINT2_vect){
 	clr(PORTD, PD2);
 }
 
+/* Set true every 100ms to regulate speed control. */
+volatile bool DoSpeed;
 
 /* Speed Control Interrupt */
 ISR(TIMER3_COMPA_vect){
 	DoSpeed = true;
 }
 
-/* Set true every 100ms to regulate speed control. */
-volatile bool DoSpeed;
+#define CLAMP_BYTE(var) do {var = (var > 255) ? 255 : ((var < -255) ? -255 : var); } while(0);
+
+static inline void __attribute__((always_inline)) pi(accum kp,
+                                                     accum ki,
+                                                     volatile const accum *target_rpm_data,
+                                                     volatile int16_t *count_isr,
+                                                     volatile accum *speedout_data,
+                                                     volatile int16_t *power_data,
+                                                     void (*motor_setfunc)(int16_t),
+                                                     accum *i_store){
+	accum err, speed, target_rpm, count;
+	int16_t power;
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+		count = *count_isr;
+		*count_isr = 0;
+	}
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+		target_rpm = *target_rpm_data;
+	}
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+		power = *power_data;
+	}
+	speed = count / 2.72k;
+	err = target_rpm - speed;
+	(*i_store) += err;
+	power += kp*err + ki*(*i_store);
+	CLAMP_BYTE(power)
+	if(target_rpm == 0k){
+		power = 0;
+		*i_store = 0;
+	}
+	motor_setfunc(power);
+	*power_data = power;
+	*speedout_data = speed;
+}
 
 /* Do PI speed control updates. */
 void motor_pi(void){
 	set(PORTD, PD3);
-	Data->left_speed = CountL;
-	Data->right_speed = CountR;
+	static accum i_l, i_r;
+	accum kp, ki;
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+		kp = Data->motor_p;
+	}
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+		ki = Data->motor_i;
+	}
+	pi(kp, ki, &(Data->left_motor), &CountL, &(Data->left_speed),  &(Data->left_power), motor_lpower, &i_l);
+	pi(kp, ki, &(Data->right_motor), &CountR, &(Data->right_speed),  &(Data->right_power), motor_rpower, &i_r);
 	clr(PORTD, PD3);
 }

@@ -89,10 +89,10 @@ def get_right_motor(): #Right Motor Target Speed in RPM
 	return read_reg_raw(2, "accum")
 
 def get_left_power(): #Left Motor Power
-	return read_reg_raw(3, "uint8_t")
+	return read_reg_raw(3, "int16_t")
 
 def get_right_power(): #Right Motor Power
-	return read_reg_raw(4, "uint8_t")
+	return read_reg_raw(4, "int16_t")
 
 def get_left_speed(): #Left Motor Actual Speed in RPM
 	return read_reg_raw(5, "accum")
