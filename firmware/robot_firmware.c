@@ -40,9 +40,10 @@ void init(void){
 int main(void){
 	init();
 	while(1){
- 		motor_lpower(Data->left_power);
-		motor_rpower(Data->right_power);
-		_delay_ms(2);
+ 		if(DoSpeed){
+			DoSpeed = false;
+			motor_pi();
+		}
 	}
 	return(0);
 }

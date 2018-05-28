@@ -6,6 +6,7 @@
 #include "motor.h"
 #include <avr/interrupt.h>
 #include <stdlib.h>
+#include "protocol.h"
 
 #define set(port, bit) (port |= _BV(bit))
 #define clr(port, bit) (port &= ~_BV(bit))
@@ -29,9 +30,9 @@ void motor_init(void){
 	TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM10);
 	TCCR1B = _BV(CS11) | _BV(CS10);
 	
-	/* Setup 100Hz Speed Regulation Timer */
+	/* Setup 10Hz Speed Regulation Timer */
 	TIMSK3 = _BV(OCIE3A);
-	OCR3A = F_CPU / (100 * 64);
+	OCR3A = F_CPU / (10 * 64);
 	TCCR3B = _BV(WGM32) | _BV(CS31) | _BV(CS30);
 }
 
@@ -57,14 +58,64 @@ void motor_rpower(int16_t power){
 	}
 }
 
-/* Encoder Interrupt */
+/* Encoder Counts */
+static volatile int16_t CountL, CountR;
+
+/* Encoder Interrupt
+ * Increments/Decrements CountL and CountR. */
+// ISR(PCINT2_vect, ISR_NAKED){
+// 	/* Direction = a_new ^ b_prev
+// 	 * Count = (a_new ^ a_old) | (b_new ^ b_old) */
+// 	static uint8_t prev_pinc;
+// 	asm volatile ("\
+// 	sbi 0x0b, 2 ; set PD2 TODO                \
+// 	                                          \
+// 	pop r4                                    \
+// 	cbi 0x0b, 2 ; clr PD2 TODO                \
+// 	");
+// 	
+// 	uint8_t cur_pinc = PINC;
+// 	set(PORTD, PD3);
+// }
 ISR(PCINT2_vect){
+	/* Direction = a_new ^ b_prev
+	 * Count = (a_new ^ a_old) | (b_new ^ b_old)
+	 * PINC: msb X X X RB RA LB LA X lsb */
+	static uint8_t prev_pinc;
+	uint8_t pinc;
 	set(PORTD, PD2);
+	pinc = PINC;
+	if((pinc ^ prev_pinc) & 0x18){ /* Count Right */
+		if((pinc ^ (prev_pinc >> 1)) & 0x08){
+			CountR++;
+		} else {
+			CountR--;
+		}
+	}
+	if((pinc ^ prev_pinc) & 0x06){ /* Count Left */
+		if((pinc ^ (prev_pinc >> 1)) & 0x02){
+			CountL++;
+		} else {
+			CountL--;
+		}
+	}
+	prev_pinc = pinc;
 	clr(PORTD, PD2);
 }
 
+
 /* Speed Control Interrupt */
 ISR(TIMER3_COMPA_vect){
+	DoSpeed = true;
+}
+
+/* Set true every 100ms to regulate speed control. */
+volatile bool DoSpeed;
+
+/* Do PI speed control updates. */
+void motor_pi(void){
 	set(PORTD, PD3);
+	Data->left_speed = CountL;
+	Data->right_speed = CountR;
 	clr(PORTD, PD3);
 }
