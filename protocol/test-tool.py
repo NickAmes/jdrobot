@@ -72,6 +72,7 @@ def setup_register_area(parent, window, protocol):
 		if r.write:
 			rf = writefunc(r, sp)
 			writebtn.pressed.connect(rf)
+			sp.editingFinished.connect(rf)
 			write_funcs.append(rf)
 		else:
 			writebtn.setEnabled(False)

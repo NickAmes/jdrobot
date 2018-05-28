@@ -29,7 +29,7 @@ void motor_init(void){
 	
 	/* Setup motor PWM timer. */
 	TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM10);
-	TCCR1B = _BV(CS11) | _BV(CS10);
+	TCCR1B = _BV(CS12);
 	
 	/* Setup 10Hz Speed Regulation Timer */
 	TIMSK3 = _BV(OCIE3A);
@@ -113,7 +113,8 @@ ISR(TIMER3_COMPA_vect){
 }
 
 #define POWER_LIMIT 120
-#define CLAMP_BYTE(var) do {var = (var > POWER_LIMIT) ? POWER_LIMIT : ((var < -POWER_LIMIT) ? -POWER_LIMIT : var); } while(0);
+#define I_LIMIT 10
+#define CLAMP(var, min, max) ((var > max) ? max : ((var < min) ? min : var))
 
 static inline void __attribute__((always_inline)) pi(accum kp,
                                                      accum ki,
@@ -139,10 +140,15 @@ static inline void __attribute__((always_inline)) pi(accum kp,
 	err = target_rpm - speed;
 	(*i_store) += err;
 	power += kp*err + ki*(*i_store);
-	CLAMP_BYTE(power)
-	if(target_rpm == 0k){
+	if(target_rpm == 0){
 		power = 0;
 		*i_store = 0;
+	} else {
+		if(target_rpm > 0){
+			power = CLAMP(power,  0, POWER_LIMIT);
+		} else {
+			power = CLAMP(power, -POWER_LIMIT, 0);
+		}
 	}
 	motor_setfunc(power);
 	*power_data = power;
