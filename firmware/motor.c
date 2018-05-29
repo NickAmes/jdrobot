@@ -113,18 +113,20 @@ ISR(TIMER3_COMPA_vect){
 }
 
 #define POWER_LIMIT 120
-#define I_LIMIT 10
+#define I_LIMIT 100k
 #define CLAMP(var, min, max) ((var > max) ? max : ((var < min) ? min : var))
 
 static inline void __attribute__((always_inline)) pi(accum kp,
                                                      accum ki,
+                                                     accum kd,
                                                      volatile const accum *target_rpm_data,
                                                      volatile int16_t *count_isr,
                                                      volatile accum *speedout_data,
                                                      volatile int16_t *power_data,
                                                      void (*motor_setfunc)(int16_t),
-                                                     accum *i_store){
-	accum err, speed, target_rpm, count;
+                                                     accum *i_store,
+                                                     accum *err_store){
+	accum err, derr, speed, target_rpm, count;
 	int16_t power;
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
 		count = *count_isr;
@@ -138,8 +140,15 @@ static inline void __attribute__((always_inline)) pi(accum kp,
 	}
 	speed = count / 2.72k;
 	err = target_rpm - speed;
-	(*i_store) += err;
-	power += kp*err + ki*(*i_store);
+	derr = err - (*err_store);
+	*err_store = err;
+	if((err > 0 && (*err_store < 0)) || (err < 0 && (*err_store > 0))){
+		*i_store = 0;
+	} else {
+		(*i_store) += err;
+		(*i_store) = CLAMP((*i_store), -I_LIMIT, I_LIMIT);
+	}
+	power += kp*err + (ki*(*i_store))/10 + kd*derr;
 	if(target_rpm == 0){
 		power = 0;
 		*i_store = 0;
@@ -151,22 +160,29 @@ static inline void __attribute__((always_inline)) pi(accum kp,
 		}
 	}
 	motor_setfunc(power);
-	*power_data = power;
-	*speedout_data = speed;
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+		*power_data = power;
+	}
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+		*speedout_data = speed;
+	}
 }
 
 /* Do PI speed control updates. */
 void motor_pi(void){
 	set(PORTD, PD3);
-	static accum i_l, i_r;
-	accum kp, ki;
+	static accum i_l, i_r, err_l, err_r;
+	accum kp, ki, kd;
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
 		kp = Data->motor_p;
 	}
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
 		ki = Data->motor_i;
 	}
-	pi(kp, ki, &(Data->left_motor), &CountL, &(Data->left_speed),  &(Data->left_power), motor_lpower, &i_l);
-	pi(kp, ki, &(Data->right_motor), &CountR, &(Data->right_speed),  &(Data->right_power), motor_rpower, &i_r);
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+		kd = Data->motor_d;
+	}
+	pi(kp, ki, kd, &(Data->left_motor), &CountL, &(Data->left_speed),  &(Data->left_power), motor_lpower, &i_l, &err_l);
+	pi(kp, ki, kd, &(Data->right_motor), &CountR, &(Data->right_speed),  &(Data->right_power), motor_rpower, &i_r, &err_r);
 	clr(PORTD, PD3);
 }

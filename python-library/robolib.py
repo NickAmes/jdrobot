@@ -112,3 +112,9 @@ def set_motor_i(value): #Motor Speed Control I Constant
 def get_motor_i(): #Motor Speed Control I Constant
 	return read_reg_raw(8, "accum")
 
+def set_motor_d(value): #Motor Speed Control D Constant
+	write_reg_raw(9, "accum", value)
+
+def get_motor_d(): #Motor Speed Control D Constant
+	return read_reg_raw(9, "accum")
+
