@@ -16,12 +16,6 @@ bool batt_charging(void){
 	return !(PINB & _BV(PB0));
 }
 
-/* Get battery charge percentage,
- * as an int from 0-100. */
-uint8_t batt_percent(void){
-	return 0;
-}
-
 /* Perform an ADC conversion and return the result. */
 static uint16_t do_conversion(void){
 	//start ADC conversion

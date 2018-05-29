@@ -124,9 +124,24 @@ def set_motor_d(value): #Motor Speed Control D Constant
 def get_motor_d(): #Motor Speed Control D Constant
 	return read_reg_raw(9, "accum")
 
-def get_batt_mv(): #Battery voltage, in mv.
+def get_batt_mv(): #Battery Voltage, in Millivolts
 	return read_reg_raw(10, "uint16_t")
 
-def get_batt_level(): #Battery level as a percentage, from 0-100.
+def set_led_r(value): #RGB LED Red Brightness (0-255)
+	write_reg_raw(11, "uint8_t", value)
+
+def get_led_r(): #RGB LED Red Brightness (0-255)
 	return read_reg_raw(11, "uint8_t")
+
+def set_led_g(value): #RGB LED Green Brightness (0-255)
+	write_reg_raw(12, "uint8_t", value)
+
+def get_led_g(): #RGB LED Green Brightness (0-255)
+	return read_reg_raw(12, "uint8_t")
+
+def set_led_b(value): #RGB LED Blue Brightness (0-255)
+	write_reg_raw(13, "uint8_t", value)
+
+def get_led_b(): #RGB LED Blue Brightness (0-255)
+	return read_reg_raw(13, "uint8_t")
 
