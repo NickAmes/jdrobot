@@ -13,6 +13,7 @@
 #include "motor.h"
 #include "protocol.h"
 #include "battery.h"
+#include "led.h"
 
 #define set(port, bit) (port |= _BV(bit))
 #define clr(port, bit) (port &= ~_BV(bit))
@@ -47,6 +48,7 @@ int main(void){
 			motor_lpower(get_motor_l_power());
 			//motor_pid();
 			set_batt_mv(batt_mv());
+			led(get_led_r(), get_led_g(), get_led_b());
 		}
 	}
 	return(0);
