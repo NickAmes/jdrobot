@@ -76,13 +76,12 @@ def gen_cheader(protocol):
  */
 #include <stdfix.h>
 #include <stdint.h>
+
 """
-	s += "struct comm_data_t {\n"
 	for r in protocol:
-		s += "\t" + r.size + " " + r.name + "; /* " + r.desc + " */\n"
-	s += "};\n\n"
-	
-	s+= """/* To avoid the volatile qualifier being a pain in the ass, the main loop
+		s += "inline %s get_%s(); /* %s */\n"%(r.size, r.name, r.desc)
+		s += "inline void set_%s(%s); /* %s */\n\n"%(r.name, r.size, r.desc)
+	s += """/* To avoid the volatile qualifier being a pain in the ass, the main loop
  * accesses the DataReal struct through this pointer. */
 extern volatile struct comm_data_t *Data;"""
 	return s
@@ -104,16 +103,37 @@ def gen_csource(protocol):
  *          Any changes you make will be erased.
  */
 #include <avr/interrupt.h>
+#include <util/atomic.h>
 #include "protocol.h"
 #include "spi.h"
+
 """
-	s += "struct comm_data_t DataReal = {\n"
+	s += "struct comm_data_t {\n"
+	for r in protocol:
+		s += "\t" + r.size + " " + r.name + "; /* " + r.desc + " */\n"
+	s += "};\n\n"
+	s += "static volatile struct comm_data_t Data = {\n"
 	for r in protocol:
 		s += "\t." + r.name + " = " + format_default(r) + ", /* " + r.desc + " */\n"
 	s += "};\n\n"
-	s += "volatile struct comm_data_t *Data = &DataReal;\n"
 	s += "\n"
 	
+	for r in protocol:
+		s += "inline %s get_%s(){ /* %s */\n"%(r.size, r.name, r.desc)
+		s += """\t%s v;
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+		v = Data.%s;
+	}
+	return v;
+}
+"""%(r.size, r.name)
+		s += "inline void set_%s(%s v){ /* %s */\n"%(r.name, r.size, r.desc)
+		s += """\tATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+		Data.%s = v;
+	}
+}
+
+"""%(r.name)
 	s += """ISR(SPI0_STC_vect){
 	uint8_t reg_num = SPDR0;
 	switch(reg_num){
