@@ -78,12 +78,14 @@ def gen_cheader(protocol):
 #include <stdint.h>
 
 """
+	s += "struct comm_data_t {\n"
 	for r in protocol:
-		s += "inline %s get_%s(); /* %s */\n"%(r.size, r.name, r.desc)
-		s += "inline void set_%s(%s); /* %s */\n\n"%(r.name, r.size, r.desc)
-	s += """/* To avoid the volatile qualifier being a pain in the ass, the main loop
- * accesses the DataReal struct through this pointer. */
-extern volatile struct comm_data_t *Data;"""
+		s += "\t" + r.size + " " + r.name + "; /* " + r.desc + " */\n"
+	s += "};\n\n"
+	for r in protocol:
+		s += "%s get_%s(void); /* %s */\n"%(r.size, r.name, r.desc)
+		s += "void set_%s(%s); /* %s */\n\n"%(r.name, r.size, r.desc)
+	s += """extern volatile struct comm_data_t Data;"""
 	return s
 
 def gen_csource(protocol):
@@ -108,18 +110,14 @@ def gen_csource(protocol):
 #include "spi.h"
 
 """
-	s += "struct comm_data_t {\n"
-	for r in protocol:
-		s += "\t" + r.size + " " + r.name + "; /* " + r.desc + " */\n"
-	s += "};\n\n"
-	s += "static volatile struct comm_data_t Data = {\n"
+	s += "volatile struct comm_data_t Data = {\n"
 	for r in protocol:
 		s += "\t." + r.name + " = " + format_default(r) + ", /* " + r.desc + " */\n"
 	s += "};\n\n"
 	s += "\n"
 	
 	for r in protocol:
-		s += "inline %s get_%s(){ /* %s */\n"%(r.size, r.name, r.desc)
+		s += "%s get_%s(void){ /* %s */\n"%(r.size, r.name, r.desc)
 		s += """\t%s v;
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
 		v = Data.%s;
@@ -127,7 +125,7 @@ def gen_csource(protocol):
 	return v;
 }
 """%(r.size, r.name)
-		s += "inline void set_%s(%s v){ /* %s */\n"%(r.name, r.size, r.desc)
+		s += "void set_%s(%s v){ /* %s */\n"%(r.name, r.size, r.desc)
 		s += """\tATOMIC_BLOCK(ATOMIC_RESTORESTATE){
 		Data.%s = v;
 	}
@@ -142,11 +140,11 @@ def gen_csource(protocol):
 	for r in protocol:
 		if r.write:
 			s += "\t\tcase        % 2d: /* Write %s (%s) */\n"%(r.number, r.name, r.desc)
-			s += "\t\t\tspi_rx((uint8_t *) &DataReal.%s, sizeof(DataReal.%s));\n"%(r.name, r.name)
+			s += "\t\t\tspi_rx((uint8_t *) &Data.%s, sizeof(Data.%s));\n"%(r.name, r.name)
 			s += "\t\t\tbreak;\n"
 		if r.read:
 			s += "\t\tcase 0x80 + % 2d: /* Read %s (%s) */\n"%(r.number, r.name, r.desc)
-			s += "\t\t\tspi_tx((uint8_t *) &DataReal.%s, sizeof(DataReal.%s));\n"%(r.name, r.name)
+			s += "\t\t\tspi_tx((uint8_t *) &Data.%s, sizeof(Data.%s));\n"%(r.name, r.name)
 			s += "\t\t\tbreak;\n"
 	s += """	}
 

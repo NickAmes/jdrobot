@@ -76,28 +76,34 @@ def init():
 	"""Setup the SPI interface for communication with the microcontroller."""
 	wiringpi.wiringPiSetupGpio()  # For GPIO pin numbering
 	wiringpi.wiringPiSPISetup(0, 500000)
-def set_left_motor(value): #Left Motor Target Speed in RPM
+def set_motor_l_target(value): #Left Motor Target Speed in RPM
 	write_reg_raw(1, "accum", value)
 
-def get_left_motor(): #Left Motor Target Speed in RPM
+def get_motor_l_target(): #Left Motor Target Speed in RPM
 	return read_reg_raw(1, "accum")
 
-def set_right_motor(value): #Right Motor Target Speed in RPM
+def set_motor_r_target(value): #Right Motor Target Speed in RPM
 	write_reg_raw(2, "accum", value)
 
-def get_right_motor(): #Right Motor Target Speed in RPM
+def get_motor_r_target(): #Right Motor Target Speed in RPM
 	return read_reg_raw(2, "accum")
 
-def get_left_power(): #Left Motor Power
+def set_motor_l_power(value): #Left Motor Power
+	write_reg_raw(3, "int16_t", value)
+
+def get_motor_l_power(): #Left Motor Power
 	return read_reg_raw(3, "int16_t")
 
-def get_right_power(): #Right Motor Power
+def set_motor_r_power(value): #Right Motor Power
+	write_reg_raw(4, "int16_t", value)
+
+def get_motor_r_power(): #Right Motor Power
 	return read_reg_raw(4, "int16_t")
 
-def get_left_speed(): #Left Motor Actual Speed in RPM
+def get_motor_l_speed(): #Left Motor Actual Speed in RPM
 	return read_reg_raw(5, "accum")
 
-def get_right_speed(): #Right Motor Actual Speed in RPM
+def get_motor_r_speed(): #Right Motor Actual Speed in RPM
 	return read_reg_raw(6, "accum")
 
 def set_motor_p(value): #Motor Speed Control P Constant
@@ -117,4 +123,10 @@ def set_motor_d(value): #Motor Speed Control D Constant
 
 def get_motor_d(): #Motor Speed Control D Constant
 	return read_reg_raw(9, "accum")
+
+def get_batt_mv(): #Battery voltage, in mv.
+	return read_reg_raw(10, "uint16_t")
+
+def get_batt_level(): #Battery level as a percentage, from 0-100.
+	return read_reg_raw(11, "uint8_t")
 

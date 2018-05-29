@@ -4,3 +4,4 @@
  */
 #define F_CPU 8000000UL //TODO: Change when oscillator fixed. 
 #define BAUD 9600
+#define MOTOR_I_LIMIT 100k

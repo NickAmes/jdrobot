@@ -3,6 +3,7 @@
  * Nick Ames 2018
  */
 #include <stdint.h>
+#include <stdfix.h>
 #include <stdbool.h>
 
 /* Setup motor control. */
@@ -21,3 +22,18 @@ void motor_lpower(int16_t power);
 /* Set right motor.
  * power ranges from -255 to 255. */
 void motor_rpower(int16_t power);
+
+/* PID controller struct */
+typedef struct {
+	accum kp, ki, kd;
+	bool motor_mode; /* If true, PID controls the rate of change of the output. */
+	accum target;
+	accum current;
+	accum output;
+	accum i_accum;
+	accum i_limit;
+	accum prev_err;
+} pid_t;
+
+/* Calculate PID and update the given struct. */
+void calc_pid(pid_t *pid);

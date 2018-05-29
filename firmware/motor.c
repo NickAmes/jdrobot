@@ -64,20 +64,18 @@ static volatile int16_t CountL, CountR;
 
 /* Encoder Interrupt
  * Increments/Decrements CountL and CountR. */
-// ISR(PCINT2_vect, ISR_NAKED){
-// 	/* Direction = a_new ^ b_prev
-// 	 * Count = (a_new ^ a_old) | (b_new ^ b_old) */
-// 	static uint8_t prev_pinc;
-// 	asm volatile ("\
-// 	sbi 0x0b, 2 ; set PD2 TODO                \
-// 	                                          \
-// 	pop r4                                    \
-// 	cbi 0x0b, 2 ; clr PD2 TODO                \
-// 	");
-// 	
-// 	uint8_t cur_pinc = PINC;
-// 	set(PORTD, PD3);
-// }
+/*ISR(PCINT2_vect, ISR_NAKED){
+	static uint8_t prev_pinc;
+	asm volatile ("\
+	sbi 0x0b, 2 ; set PD2 TODO                \
+	                                          \
+	pop r4                                    \
+	cbi 0x0b, 2 ; clr PD2 TODO                \
+	");
+	
+	uint8_t cur_pinc = PINC;
+	set(PORTD, PD3);
+}*/
 ISR(PCINT2_vect){
 	/* Direction = a_new ^ b_prev
 	 * Count = (a_new ^ a_old) | (b_new ^ b_old)
@@ -112,77 +110,82 @@ ISR(TIMER3_COMPA_vect){
 	DoSpeed = true;
 }
 
-#define POWER_LIMIT 120
-#define I_LIMIT 100k
+
 #define CLAMP(var, min, max) ((var > max) ? max : ((var < min) ? min : var))
 
-static inline void __attribute__((always_inline)) pi(accum kp,
-                                                     accum ki,
-                                                     accum kd,
-                                                     volatile const accum *target_rpm_data,
-                                                     volatile int16_t *count_isr,
-                                                     volatile accum *speedout_data,
-                                                     volatile int16_t *power_data,
-                                                     void (*motor_setfunc)(int16_t),
-                                                     accum *i_store,
-                                                     accum *err_store){
-	accum err, derr, speed, target_rpm, count;
-	int16_t power;
+// static inline void __attribute__((always_inline)) pi(accum kp,
+//                                                      accum ki,
+//                                                      accum kd,
+//                                                      volatile const accum *target_rpm_data,
+//                                                      volatile int16_t *count_isr,
+//                                                      volatile accum *speedout_data,
+//                                                      volatile int16_t *power_data,
+//                                                      void (*motor_setfunc)(int16_t),
+//                                                      accum *i_store,
+//                                                      accum *err_store){
+// 	accum err, derr, speed, target_rpm, count;
+// 	int16_t power;
+// 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+// 		count = *count_isr;
+// 		*count_isr = 0;
+// 	}
+// 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+// 		target_rpm = *target_rpm_data;
+// 	}
+// 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+// 		power = *power_data;
+// 	}
+// 	speed = count / 2.72k;
+// 	err = target_rpm - speed;
+// 	derr = err - (*err_store);
+// 	*err_store = err;
+// 	if((err > 0 && (*err_store < 0)) || (err < 0 && (*err_store > 0))){
+// 		*i_store = 0;
+// 	} else {
+// 		(*i_store) += err;
+// 		(*i_store) = CLAMP((*i_store), -I_LIMIT, I_LIMIT);
+// 	}
+// 	power += kp*err + (ki*(*i_store))/10 + kd*derr;
+// 	if(target_rpm == 0){
+// 		power = 0;
+// 		*i_store = 0;
+// 	} else {
+// 		if(target_rpm > 0){
+// 			power = CLAMP(power,  0, POWER_LIMIT);
+// 		} else {
+// 			power = CLAMP(power, -POWER_LIMIT, 0);
+// 		}
+// 	}
+// 	motor_setfunc(power);
+// 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+// 		*power_data = power;
+// 	}
+// 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+// 		*speedout_data = speed;
+// 	}
+// }
+
+
+
+#define COUNT_RPM_FACTOR 2.72k
+
+static inline accum get_speed(volatile int16_t *countvar){
+	accum speed;
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-		count = *count_isr;
-		*count_isr = 0;
+		speed = *countvar;
 	}
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-		target_rpm = *target_rpm_data;
-	}
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-		power = *power_data;
-	}
-	speed = count / 2.72k;
-	err = target_rpm - speed;
-	derr = err - (*err_store);
-	*err_store = err;
-	if((err > 0 && (*err_store < 0)) || (err < 0 && (*err_store > 0))){
-		*i_store = 0;
-	} else {
-		(*i_store) += err;
-		(*i_store) = CLAMP((*i_store), -I_LIMIT, I_LIMIT);
-	}
-	power += kp*err + (ki*(*i_store))/10 + kd*derr;
-	if(target_rpm == 0){
-		power = 0;
-		*i_store = 0;
-	} else {
-		if(target_rpm > 0){
-			power = CLAMP(power,  0, POWER_LIMIT);
-		} else {
-			power = CLAMP(power, -POWER_LIMIT, 0);
-		}
-	}
-	motor_setfunc(power);
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-		*power_data = power;
-	}
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-		*speedout_data = speed;
-	}
+	return speed / COUNT_RPM_FACTOR;
+}
+
+/* Calculate PID and update the given struct. */
+void calc_pid(pid_t *pid){
+	pid = pid;
 }
 
 /* Do PI speed control updates. */
-void motor_pi(void){
+void motor_pid(void){
 	set(PORTD, PD3);
-	static accum i_l, i_r, err_l, err_r;
-	accum kp, ki, kd;
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-		kp = Data->motor_p;
-	}
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-		ki = Data->motor_i;
-	}
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-		kd = Data->motor_d;
-	}
-	pi(kp, ki, kd, &(Data->left_motor), &CountL, &(Data->left_speed),  &(Data->left_power), motor_lpower, &i_l, &err_l);
-	pi(kp, ki, kd, &(Data->right_motor), &CountR, &(Data->right_speed),  &(Data->right_power), motor_rpower, &i_r, &err_r);
+	//static pid_t lpid, rpid;
+	
 	clr(PORTD, PD3);
 }
