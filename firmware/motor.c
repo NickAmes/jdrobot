@@ -65,7 +65,7 @@ static volatile int16_t CountL, CountR;
 
 /* Encoder Interrupt
  * Increments/Decrements CountL and CountR. */
-/* */
+/*
 static volatile uint8_t PrevPINC;
 ISR(PCINT2_vect, ISR_NAKED){
 	asm volatile (
@@ -90,35 +90,35 @@ ISR(PCINT2_vect, ISR_NAKED){
 	
 	"reti                       \n"
 	);
-}
+} */
 
-// ISR(PCINT2_vect){
-// 	/* Direction = a_new ^ b_prev
-// 	 * Count = (a_new ^ a_old) | (b_new ^ b_old)
-// 	 * PINC: msb X X X RB RA LB LA X lsb */
-// 	static uint8_t prev_pinc;
-// 	uint8_t pinc;
-// // 	set(PORTD, PD2);
-// 	asm volatile ("sbi 0x0B, 2\n");
-// 	pinc = PINC;
-// 	if((pinc ^ prev_pinc) & 0x18){ /* Count Right */
-// 		if((pinc ^ (prev_pinc >> 1)) & 0x08){
-// 			CountR++;
-// 		} else {
-// 			CountR--;
-// 		}
-// 	}
-// 	if((pinc ^ prev_pinc) & 0x06){ /* Count Left */
-// 		if((pinc ^ (prev_pinc >> 1)) & 0x02){
-// 			CountL--;
-// 		} else {
-// 			CountL++;
-// 		}
-// 	}
-// 	prev_pinc = pinc;
-// // 	clr(PORTD, PD2);
-// 	asm volatile ("cbi 0x0B, 2\n");
-// }
+ISR(PCINT2_vect){
+	/* Direction = a_new ^ b_prev
+	 * Count = (a_new ^ a_old) | (b_new ^ b_old)
+	 * PINC: msb X X X RB RA LB LA X lsb */
+	static uint8_t prev_pinc;
+	uint8_t pinc;
+// 	set(PORTD, PD2);
+	asm volatile ("sbi 0x0B, 2\n");
+	pinc = PINC;
+	if((pinc ^ prev_pinc) & 0x18){ /* Count Right */
+		if((pinc ^ (prev_pinc >> 1)) & 0x08){
+			CountR++;
+		} else {
+			CountR--;
+		}
+	}
+	if((pinc ^ prev_pinc) & 0x06){ /* Count Left */
+		if((pinc ^ (prev_pinc >> 1)) & 0x02){
+			CountL--;
+		} else {
+			CountL++;
+		}
+	}
+	prev_pinc = pinc;
+// 	clr(PORTD, PD2);
+	asm volatile ("cbi 0x0B, 2\n");
+}
 
 /* Set true every 100ms to regulate speed control. */
 volatile bool DoSpeed;
