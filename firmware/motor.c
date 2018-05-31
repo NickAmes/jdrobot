@@ -2,7 +2,6 @@
  * Robot Firmware - Motor Control
  * Nick Ames 2018
  */
-#include "config.h"
 #include "motor.h"
 #include <avr/interrupt.h>
 #include <stdlib.h>
@@ -66,41 +65,60 @@ static volatile int16_t CountL, CountR;
 
 /* Encoder Interrupt
  * Increments/Decrements CountL and CountR. */
-/*
+/* */
+static volatile uint8_t PrevPINC;
 ISR(PCINT2_vect, ISR_NAKED){
-	asm volatile ("\
-	sbi 0x0b, 2 ; set PD2 TODO                \
-	                                          \
-	pop r4                                    \
-	cbi 0x0b, 2 ; clr PD2 TODO                \
-	");
-}*/
-
-ISR(PCINT2_vect){
-	/* Direction = a_new ^ b_prev
-	 * Count = (a_new ^ a_old) | (b_new ^ b_old)
-	 * PINC: msb X X X RB RA LB LA X lsb */
-	static uint8_t prev_pinc;
-	uint8_t pinc;
-	set(PORTD, PD2);
-	pinc = PINC;
-	if((pinc ^ prev_pinc) & 0x18){ /* Count Right */
-		if((pinc ^ (prev_pinc >> 1)) & 0x08){
-			CountR++;
-		} else {
-			CountR--;
-		}
-	}
-	if((pinc ^ prev_pinc) & 0x06){ /* Count Left */
-		if((pinc ^ (prev_pinc >> 1)) & 0x02){
-			CountL--;
-		} else {
-			CountL++;
-		}
-	}
-	prev_pinc = pinc;
-	clr(PORTD, PD2);
+	asm volatile (
+	"sbi 0x0B, 2 ; set PD2 TODO \n"
+	
+	"push r0        ; pop SREG\n"
+	"in   r0, 0x3f  ; pop SREG\n"
+	"push r0\n"
+	"push XL\n"
+	"push XH\n"
+	
+	"ldi XL, lo8(PrevPINC)\n"
+	"ldi XH, hi8(PrevPINC)\n"
+	
+	"pop XH\n"
+	"pop XL\n"
+	"pop  r0       ; pop SREG\n"
+	"out  0x3f, r0 ; pop SREG\n"
+	"pop  r0 \n"
+	
+	"cbi 0x0B, 2 ; clr PD2 TODO \n"
+	
+	"reti                       \n"
+	);
 }
+
+// ISR(PCINT2_vect){
+// 	/* Direction = a_new ^ b_prev
+// 	 * Count = (a_new ^ a_old) | (b_new ^ b_old)
+// 	 * PINC: msb X X X RB RA LB LA X lsb */
+// 	static uint8_t prev_pinc;
+// 	uint8_t pinc;
+// // 	set(PORTD, PD2);
+// 	asm volatile ("sbi 0x0B, 2\n");
+// 	pinc = PINC;
+// 	if((pinc ^ prev_pinc) & 0x18){ /* Count Right */
+// 		if((pinc ^ (prev_pinc >> 1)) & 0x08){
+// 			CountR++;
+// 		} else {
+// 			CountR--;
+// 		}
+// 	}
+// 	if((pinc ^ prev_pinc) & 0x06){ /* Count Left */
+// 		if((pinc ^ (prev_pinc >> 1)) & 0x02){
+// 			CountL--;
+// 		} else {
+// 			CountL++;
+// 		}
+// 	}
+// 	prev_pinc = pinc;
+// // 	clr(PORTD, PD2);
+// 	asm volatile ("cbi 0x0B, 2\n");
+// }
 
 /* Set true every 100ms to regulate speed control. */
 volatile bool DoSpeed;

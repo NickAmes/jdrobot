@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdfix.h>
 #include <stdbool.h>
-
+#include "config.h"
 /* Setup motor control. */
 void motor_init(void);
 

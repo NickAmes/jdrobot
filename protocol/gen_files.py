@@ -76,6 +76,7 @@ def gen_cheader(protocol):
  */
 #include <stdfix.h>
 #include <stdint.h>
+#include "config.h"
 
 """
 	s += "struct comm_data_t {\n"
