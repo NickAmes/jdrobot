@@ -6,8 +6,10 @@
 #include "motor.h"
 #include <avr/interrupt.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <util/atomic.h>
 #include "protocol.h"
+#include "uart.h"
 
 #define set(port, bit) (port |= _BV(bit))
 #define clr(port, bit) (port &= ~_BV(bit))
@@ -93,9 +95,9 @@ ISR(PCINT2_vect){
 	}
 	if((pinc ^ prev_pinc) & 0x06){ /* Count Left */
 		if((pinc ^ (prev_pinc >> 1)) & 0x02){
-			CountL++;
-		} else {
 			CountL--;
+		} else {
+			CountL++;
 		}
 	}
 	prev_pinc = pinc;
@@ -110,82 +112,87 @@ ISR(TIMER3_COMPA_vect){
 	DoSpeed = true;
 }
 
-
-#define CLAMP(var, min, max) ((var > max) ? max : ((var < min) ? min : var))
-
-// static inline void __attribute__((always_inline)) pi(accum kp,
-//                                                      accum ki,
-//                                                      accum kd,
-//                                                      volatile const accum *target_rpm_data,
-//                                                      volatile int16_t *count_isr,
-//                                                      volatile accum *speedout_data,
-//                                                      volatile int16_t *power_data,
-//                                                      void (*motor_setfunc)(int16_t),
-//                                                      accum *i_store,
-//                                                      accum *err_store){
-// 	accum err, derr, speed, target_rpm, count;
-// 	int16_t power;
-// 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-// 		count = *count_isr;
-// 		*count_isr = 0;
-// 	}
-// 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-// 		target_rpm = *target_rpm_data;
-// 	}
-// 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-// 		power = *power_data;
-// 	}
-// 	speed = count / 2.72k;
-// 	err = target_rpm - speed;
-// 	derr = err - (*err_store);
-// 	*err_store = err;
-// 	if((err > 0 && (*err_store < 0)) || (err < 0 && (*err_store > 0))){
-// 		*i_store = 0;
-// 	} else {
-// 		(*i_store) += err;
-// 		(*i_store) = CLAMP((*i_store), -I_LIMIT, I_LIMIT);
-// 	}
-// 	power += kp*err + (ki*(*i_store))/10 + kd*derr;
-// 	if(target_rpm == 0){
-// 		power = 0;
-// 		*i_store = 0;
-// 	} else {
-// 		if(target_rpm > 0){
-// 			power = CLAMP(power,  0, POWER_LIMIT);
-// 		} else {
-// 			power = CLAMP(power, -POWER_LIMIT, 0);
-// 		}
-// 	}
-// 	motor_setfunc(power);
-// 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-// 		*power_data = power;
-// 	}
-// 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
-// 		*speedout_data = speed;
-// 	}
-// }
-
-
-
 #define COUNT_RPM_FACTOR 2.72k
-
-static inline accum get_speed(volatile int16_t *countvar){
+#define CLAMP(var, min, max) ((var > max) ? max : ((var < min) ? min : var))
+#define IABS(var) ((var < 0) ? -var : var)
+static inline accum speed(volatile int16_t *countvar){
 	accum speed;
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
 		speed = *countvar;
+		*countvar = 0;
 	}
 	return speed / COUNT_RPM_FACTOR;
 }
 
 /* Calculate PID and update the given struct. */
 void calc_pid(pid_t *pid){
-	pid = pid;
+	accum err = pid->target - pid->current;
+	accum derr = err - pid->prev_err;
+	pid->i_accum += err;
+	pid->i_accum = CLAMP(pid->i_accum, -pid->i_limit, pid->i_limit);
+	if((err > 0 && pid->prev_err < 0) || (err < 0 && pid->prev_err > 0)){
+		pid->i_accum = 0;
+	}
+	if(pid->target > 0 && pid->current == 0){
+		pid->output = MOTOR_PRESTART;
+	}
+	if(pid->target == 0k){
+		pid->output = 0;
+		pid->i_accum = 0;
+	} else {
+		pid->output += pid->kp*err + pid->ki*pid->i_accum + pid->kd*derr;
+		if(pid->target > 0){
+			pid->output = CLAMP(pid->output, 0k, 255k);
+		} else {
+			pid->output = CLAMP(pid->output, -255k, 0k);
+		}
+	}
+	pid->prev_err = err;
 }
 
+/* Setup the PID struct for a single motor. */
+static void motor_pid_setup(pid_t *pid){
+	pid->kp = get_motor_kp();
+	pid->ki = get_motor_ki();
+	pid->kd = get_motor_kd();
+	pid->i_limit = MOTOR_I_LIMIT;
+}
+
+/* Print logging info about a motor PID loop. */
+void pid_log(pid_t *pid){
+	printf("Current RPM:\t% 3d\tTarget RPM:\t% 3d\tPower:\t%d", (int) pid->target, (int) pid->current, (int) pid->output);
+	
+	printf("\t 0|");
+	for(int i=0;i<30;i++){
+		if(pid->current > i*10){
+			/* UTF-8 FULL BLOCK */
+			uart_putchar(0xE2);
+			uart_putchar(0x96);
+			uart_putchar(0x88);
+		} else {
+			uart_putchar(' ');
+		}
+	}
+	printf("| 300\n");
+}
 /* Do PI speed control updates. */
 void motor_pid(void){
 	set(PORTD, PD3);
-	//static pid_t lpid, rpid;
-	
+	static pid_t lpid, rpid;
+	motor_pid_setup(&lpid);
+	motor_pid_setup(&rpid);
+	lpid.target = get_motor_l_target();
+	rpid.target = get_motor_r_target();
+	lpid.current = speed(&CountL);
+	rpid.current = speed(&CountR);
+	set_motor_l_speed(lpid.current);
+	set_motor_r_speed(rpid.current);
+	calc_pid(&lpid);
+	calc_pid(&rpid);
+	set_motor_l_power(lpid.output);
+	set_motor_r_power(rpid.output);
+	motor_lpower(lpid.output);
+	motor_rpower(rpid.output);
+	pid_log(&rpid);
 	clr(PORTD, PD3);
 }

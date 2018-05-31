@@ -106,22 +106,22 @@ def get_motor_l_speed(): #Left Motor Actual Speed in RPM
 def get_motor_r_speed(): #Right Motor Actual Speed in RPM
 	return read_reg_raw(6, "accum")
 
-def set_motor_p(value): #Motor Speed Control P Constant
+def set_motor_kp(value): #Motor Speed Control P Constant
 	write_reg_raw(7, "accum", value)
 
-def get_motor_p(): #Motor Speed Control P Constant
+def get_motor_kp(): #Motor Speed Control P Constant
 	return read_reg_raw(7, "accum")
 
-def set_motor_i(value): #Motor Speed Control I Constant
+def set_motor_ki(value): #Motor Speed Control I Constant
 	write_reg_raw(8, "accum", value)
 
-def get_motor_i(): #Motor Speed Control I Constant
+def get_motor_ki(): #Motor Speed Control I Constant
 	return read_reg_raw(8, "accum")
 
-def set_motor_d(value): #Motor Speed Control D Constant
+def set_motor_kd(value): #Motor Speed Control D Constant
 	write_reg_raw(9, "accum", value)
 
-def get_motor_d(): #Motor Speed Control D Constant
+def get_motor_kd(): #Motor Speed Control D Constant
 	return read_reg_raw(9, "accum")
 
 def get_batt_mv(): #Battery Voltage, in Millivolts

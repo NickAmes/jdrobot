@@ -26,7 +26,6 @@ void motor_rpower(int16_t power);
 /* PID controller struct */
 typedef struct {
 	accum kp, ki, kd;
-	bool motor_mode; /* If true, PID controls the rate of change of the output. */
 	accum target;
 	accum current;
 	accum output;
@@ -37,3 +36,6 @@ typedef struct {
 
 /* Calculate PID and update the given struct. */
 void calc_pid(pid_t *pid);
+
+/* Do PI speed control updates. */
+void motor_pid(void);

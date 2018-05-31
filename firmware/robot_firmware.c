@@ -44,9 +44,9 @@ int main(void){
 	while(1){
  		if(DoSpeed){
 			DoSpeed = false;
-			motor_rpower(get_motor_l_power());
-			motor_lpower(get_motor_l_power());
-			//motor_pid();
+			//motor_rpower(get_motor_r_power());
+			//motor_lpower(get_motor_l_power());
+			motor_pid();
 			set_batt_mv(batt_mv());
 			led(get_led_r(), get_led_g(), get_led_b());
 		}

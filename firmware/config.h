@@ -3,5 +3,6 @@
  * Nick Ames 2018
  */
 #define F_CPU 8000000UL //TODO: Change when oscillator fixed. 
-#define BAUD 9600
+#define BAUD 19200
 #define MOTOR_I_LIMIT 100k
+#define MOTOR_PRESTART 40

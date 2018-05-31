@@ -5,10 +5,20 @@
 #include "config.h"
 #include <avr/interrupt.h>
 #include <util/setbaud.h>
+#include <stdio.h>
 #include "uart.h"
 
 #define set(port, bit) (port |= _BV(bit))
 #define clr(port, bit) (port &= ~_BV(bit))
+
+int uart_putchar_file(char c, FILE *stream) {
+    loop_until_bit_is_set(UCSR0A, UDRE);
+    UDR0 = c;
+	stream = stream;
+	return c;
+}
+
+static FILE uart_output = FDEV_SETUP_STREAM(uart_putchar_file, NULL, _FDEV_SETUP_WRITE);
 
 /* Setup UART at BAUD 8N1. */
 void uart_init(void){
@@ -22,6 +32,7 @@ void uart_init(void){
 	UCSR0C = _BV(UCSZ1) | _BV(UCSZ0); /* 8-bit data */
     UCSR0B = _BV(RXEN) | _BV(TXEN);
 	set(DDRD, PD1); /* UART output */
+	stdout = &uart_output;
 }
 
 /* Send a character out of the UART. */
@@ -47,3 +58,7 @@ void log_helper(const char *str){
 		str++;
 	}
 }
+
+
+
+
