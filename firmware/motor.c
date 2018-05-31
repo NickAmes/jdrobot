@@ -66,18 +66,16 @@ static volatile int16_t CountL, CountR;
 
 /* Encoder Interrupt
  * Increments/Decrements CountL and CountR. */
-/*ISR(PCINT2_vect, ISR_NAKED){
-	static uint8_t prev_pinc;
+/*
+ISR(PCINT2_vect, ISR_NAKED){
 	asm volatile ("\
 	sbi 0x0b, 2 ; set PD2 TODO                \
 	                                          \
 	pop r4                                    \
 	cbi 0x0b, 2 ; clr PD2 TODO                \
 	");
-	
-	uint8_t cur_pinc = PINC;
-	set(PORTD, PD3);
 }*/
+
 ISR(PCINT2_vect){
 	/* Direction = a_new ^ b_prev
 	 * Count = (a_new ^ a_old) | (b_new ^ b_old)
