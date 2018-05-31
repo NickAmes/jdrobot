@@ -149,14 +149,14 @@ void calc_pid(pid_t *pid){
 	if((err > 0 && pid->prev_err < 0) || (err < 0 && pid->prev_err > 0)){
 		pid->i_accum = 0;
 	}
-	if(pid->target > 0 && pid->current == 0){
-		pid->output = MOTOR_PRESTART;
-	}
+// 	if(pid->target > 0 && pid->current == 0){
+// 		pid->output = MOTOR_PRESTART;
+// 	}
 	if(pid->target == 0k){
 		pid->output = 0;
 		pid->i_accum = 0;
 	} else {
-		pid->output += pid->kp*err + pid->ki*pid->i_accum + pid->kd*derr;
+		pid->output = pid->kp*err + pid->ki*pid->i_accum + pid->kd*derr;
 		if(pid->target > 0){
 			pid->output = CLAMP(pid->output, 0k, 255k);
 		} else {
@@ -174,13 +174,22 @@ static void motor_pid_setup(pid_t *pid){
 	pid->i_limit = MOTOR_I_LIMIT;
 }
 
-/* Print logging info about a motor PID loop. */
-void pid_log(pid_t *pid){
-	printf("Current RPM:\t% 3d\tTarget RPM:\t% 3d\tPower:\t%d", (int) pid->target, (int) pid->current, (int) pid->output);
-	
-	printf("\t 0|");
+/* Print a bargraph. */
+void bargraph(const char *name, int16_t v){
+	printf("\t %s: -300|", name);
+	for(int i=-30;i<0;i++){
+		if(v < i*10){
+			/* UTF-8 FULL BLOCK */
+			uart_putchar(0xE2);
+			uart_putchar(0x96);
+			uart_putchar(0x88);
+		} else {
+			uart_putchar(' ');
+		}
+	}
+	uart_putchar('|');
 	for(int i=0;i<30;i++){
-		if(pid->current > i*10){
+		if(v > i*10){
 			/* UTF-8 FULL BLOCK */
 			uart_putchar(0xE2);
 			uart_putchar(0x96);
@@ -190,6 +199,12 @@ void pid_log(pid_t *pid){
 		}
 	}
 	printf("| 300\n");
+}
+
+/* Print logging info about a motor PID loop. */
+void pid_log(pid_t *pid){
+	printf("Target RPM:\t% 3d\tCurrent RPM:\t% 3d\tPower:\t%d", (int) pid->target, (int) pid->current, (int) pid->output);
+	bargraph("Current", pid->current);
 }
 /* Do PI speed control updates. */
 void motor_pid(void){
